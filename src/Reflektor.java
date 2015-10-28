@@ -83,6 +83,18 @@ public class Reflektor {
         target = m.invoke(null, parameters);
     }
 
+
+    /**
+    * In case you already have the object you want to use, but want to wrap it in reflektor
+    * @param object the object that you want to wrap in Reflektor
+    *
+    */
+
+    public Reflektor(Object object) {
+        targetClass = object.getClass();
+        target = object;
+    }
+
     /**
      * @param methodName the method which you want to invoke
      * @return the return value of the method (ignore if void)
