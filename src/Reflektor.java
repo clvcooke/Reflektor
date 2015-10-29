@@ -10,8 +10,7 @@ public class Reflektor {
 
     Class targetClass;
     Object target;
-    HashMap<String, Method> publicMethodMap = new HashMap<>();
-    HashMap<String, Method> privateMethodMap = new HashMap<>();
+    HashMap<String, Method> methodMap = new HashMap<>();
 
     /**
      * @param classPath the full path of the target class
@@ -26,7 +25,7 @@ public class Reflektor {
 
     /**
      * @param classPath  the full path of the target class
-     * @param parameters an array of the parameters (if using Reflektor objects call #getTarget on them before adding them to the array)
+     * @param parameters an array of the parameters (if using Reflektor objects call #getClient on them before adding them to the array)
      * @throws ClassNotFoundException    the class name given does not resolve to an actual class
      * @throws NoSuchMethodException     there is no constructor with these parameters
      * @throws IllegalAccessException    the class/method can not be publicly accessed
@@ -34,14 +33,9 @@ public class Reflektor {
      * @throws InstantiationException    the constructor is not valid
      */
 
-    public Reflektor(String classPath, Object... parameters) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
+    public Reflektor(String classPath,Class[] classes, Object[] parameters) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
         targetClass = Class.forName(classPath);
-        int length = parameters.length;
-        Class<?>[] classArray = new Class<?>[length];
-        for (int i = 0; i < length; i++) {
-            classArray[i] = parameters[i].getClass();
-        }
-        target = targetClass.getConstructor(classArray).newInstance(parameters);
+        target = targetClass.getConstructor(classes).newInstance(parameters);
     }
 
     /**
@@ -56,7 +50,7 @@ public class Reflektor {
 
     public Reflektor(String classPath, String methodName) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         targetClass = Class.forName(classPath);
-        Method m = targetClass.getMethod(methodName);
+        Method m = targetClass.getDeclaredMethod(methodName);
         target = m.invoke(null);
     }
 
@@ -64,7 +58,7 @@ public class Reflektor {
     /**
      * @param classPath  the full path of the target class
      * @param methodName the method used instead of a normal constructor
-     * @param parameters an array of the parameters (if using Reflektor objects call #getTarget on them before adding them to the array)\
+     * @param parameters an array of the parameters (if using Reflektor objects call #getClient on them before adding them to the array)\
      * @throws ClassNotFoundException    the class name given does not resolve to an actual class
      * @throws NoSuchMethodException     there is no method with this name
      * @throws IllegalAccessException    the class/method can not be publicly accessed
@@ -72,75 +66,25 @@ public class Reflektor {
      * @throws InstantiationException    the method is not valid
      */
 
-    public Reflektor(String classPath, String methodName, Object... parameters) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    public Reflektor(String classPath, String methodName, Class[] classes, Object[] parameters) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         targetClass = Class.forName(classPath);
-        int length = parameters.length;
-        Class<?>[] classArray = new Class<?>[length];
-        for (int i = 0; i < length; i++) {
-            classArray[i] = parameters[i].getClass();
-        }
-        Method m = targetClass.getMethod(methodName, classArray);
+        Method m = targetClass.getDeclaredMethod(methodName, classes);
         target = m.invoke(null, parameters);
     }
 
 
     /**
-    * In case you already have the object you want to use, but want to wrap it in reflektor
-    * @param object the object that you want to wrap in Reflektor
-    *
-    */
+     * In case you already have the object you want to use, but want to wrap it in reflektor
+     * @param object the object that you want to wrap in Reflektor
+     *
+     */
 
     public Reflektor(Object object) {
         targetClass = object.getClass();
         target = object;
     }
 
-    /**
-     * @param methodName the method which you want to invoke
-     * @return the return value of the method (ignore if void)
-     * @throws NoSuchMethodException     the method name given was incorrect
-     * @throws IllegalAccessException    the method is most likely private
-     * @throws InvocationTargetException
-     */
 
-    public Object invoke(String methodName) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
-        if (!publicMethodMap.containsKey(methodName)) {
-            publicMethodMap.put(methodName, targetClass.getMethod(methodName));
-        }
-        return publicMethodMap.get(methodName).invoke(target);
-    }
-
-    /**
-     * @param methodName the method which you want to invoke
-     * @param parameters the parameters for the method
-     * @return the return value of the method (ignore if void)
-     * @throws NoSuchMethodException     the method name given was incorrect or the parameters were incorrect or the method is private
-     * @throws IllegalAccessException
-     * @throws InvocationTargetException
-     */
-
-    public Object invoke(String methodName, Object... parameters) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-
-        //for now....do some speed tests later
-        int length = parameters.length;
-        StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append(methodName);
-        for (int i = 0; i < length; i++) {
-            stringBuilder.append(parameters[i].getClass());
-        }
-
-        String fullMethodName = stringBuilder.toString();
-        if (!publicMethodMap.containsKey(fullMethodName)) {
-            //Do we need to do this?
-            Class<?>[] classArray = new Class<?>[length];
-            for (int i = 0; i < length; i++) {
-                classArray[i] = parameters[i].getClass();
-            }
-            Method m = targetClass.getMethod(fullMethodName, classArray);
-            publicMethodMap.put(fullMethodName, m);
-        }
-        return publicMethodMap.get(fullMethodName).invoke(target, parameters);
-    }
 
     /**
      * @param methodName the method which you want to invoke
@@ -150,11 +94,11 @@ public class Reflektor {
      * @throws InvocationTargetException
      */
 
-    public Object invokePrivate(String methodName) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-        if (!privateMethodMap.containsKey(methodName)) {
-            privateMethodMap.put(methodName, targetClass.getDeclaredMethod(methodName));
+    public Object invoke(String methodName) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        if (!methodMap.containsKey(methodName)) {
+            methodMap.put(methodName, targetClass.getDeclaredMethod(methodName));
         }
-        return privateMethodMap.get(methodName).invoke(target);
+        return methodMap.get(methodName).invoke(target);
     }
 
     /**
@@ -166,38 +110,21 @@ public class Reflektor {
      * @throws InvocationTargetException
      */
 
-    public Object invokePrivate(String methodName, Object... parameters) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    public Object invoke(String methodName, Class[] classes, Object[] parameters) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         //for now....do some speed tests later
-        int length = parameters.length;
+        int length = classes.length;
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append(methodName);
         for (int i = 0; i < length; i++) {
-            stringBuilder.append(parameters[i].getClass());
+            stringBuilder.append(classes[i].toString());
         }
-
         String fullMethodName = stringBuilder.toString();
-        if (!privateMethodMap.containsKey(fullMethodName)) {
-            //Do we need to do this?
-            Class<?>[] classArray = new Class<?>[length];
-            for (int i = 0; i < length; i++) {
-                classArray[i] = parameters[i].getClass();
-            }
-            Method m = targetClass.getMethod(fullMethodName, classArray);
+        if (!methodMap.containsKey(fullMethodName)) {
+            Method m = targetClass.getDeclaredMethod(methodName, classes);
             m.setAccessible(true);
-            privateMethodMap.put(fullMethodName, m);
+            methodMap.put(fullMethodName, m);
         }
-        return privateMethodMap.get(fullMethodName).invoke(target, parameters);
-    }
-
-    /**
-     * @param fieldName the name of the variable
-     * @return the variables value
-     * @throws NoSuchFieldException   the field name is incorrect or the field is private
-     * @throws IllegalAccessException
-     */
-
-    public Object getVar(String fieldName) throws NoSuchFieldException, IllegalAccessException {
-        return targetClass.getField(fieldName).get(target);
+        return methodMap.get(fullMethodName).invoke(target, parameters);
     }
 
     /**
@@ -207,7 +134,7 @@ public class Reflektor {
      * @throws IllegalAccessException
      */
 
-    public Object getPrivateVar(String fieldName) throws NoSuchFieldException, IllegalAccessException {
+    public Object getVar(String fieldName) throws NoSuchFieldException, IllegalAccessException {
         Field f = targetClass.getDeclaredField(fieldName);
         f.setAccessible(true);
         return f.get(target);
@@ -216,60 +143,14 @@ public class Reflektor {
     /**
      * @param fieldName the name of the variable
      * @param value     the variables value
-     * @throws NoSuchFieldException   the field name is incorrect or the field is private
-     * @throws IllegalAccessException
-     */
-
-    public void setVar(String fieldName, Object value) throws NoSuchFieldException, IllegalAccessException {
-        targetClass.getField(fieldName).set(target, value);
-    }
-
-    /**
-     * @param fieldName the name of the variable
-     * @param value     the variables value
      * @throws NoSuchFieldException   the field name is incorrect
      * @throws IllegalAccessException
      */
 
-    public void setPrivateVar(String fieldName, Object value) throws NoSuchFieldException, IllegalAccessException {
+    public void setVar(String fieldName, Object value) throws NoSuchFieldException, IllegalAccessException {
         Field f = targetClass.getDeclaredField(fieldName);
         f.setAccessible(true);
         f.set(target, value);
-    }
-
-
-    /**
-     * @param classPath  the full path of the class
-     * @param methodName the name of the method
-     * @return the return value of the method (ignore if void)
-     * @throws ClassNotFoundException    the class path given is incorrect
-     * @throws NoSuchMethodException     the method given is wrong or the method is private
-     * @throws InvocationTargetException
-     * @throws IllegalAccessException
-     */
-
-    public static Object invokeStatic(String classPath, String methodName) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-        return Class.forName(classPath).getMethod(methodName).invoke(null);
-    }
-
-    /**
-     * @param classPath  the full path of the class
-     * @param methodName the name of the method
-     * @param parameters the parameters for the method
-     * @return the return value of the method (ignore if void)
-     * @throws ClassNotFoundException    the class path given is incorrect
-     * @throws NoSuchMethodException     the method given is wrong or the parameters are wrong or the method is private
-     * @throws InvocationTargetException
-     * @throws IllegalAccessException
-     */
-
-    public static Object invokeStatic(String classPath, String methodName, Object... parameters) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-        int length = parameters.length;
-        Class<?>[] classArray = new Class<?>[length];
-        for (int i = 0; i < length; i++) {
-            classArray[i] = parameters[i].getClass();
-        }
-        return Class.forName(classPath).getMethod(methodName, classArray).invoke(null, parameters);
     }
 
 
@@ -283,7 +164,7 @@ public class Reflektor {
      * @throws IllegalAccessException
      */
 
-    public static Object invokePrivateStatic(String classPath, String methodName) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    public static Object invokeStatic(String classPath, String methodName) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         Method m = Class.forName(classPath).getMethod(methodName);
         m.setAccessible(true);
         return m.invoke(null);
@@ -300,28 +181,10 @@ public class Reflektor {
      * @throws IllegalAccessException
      */
 
-    public static Object invokePrivateStatic(String classPath, String methodName, Object... parameters) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-        int length = parameters.length;
-        Class<?>[] classArray = new Class<?>[length];
-        for (int i = 0; i < length; i++) {
-            classArray[i] = parameters[i].getClass();
-        }
-        Method m = Class.forName(classPath).getMethod(methodName, classArray);
+    public static Object invokeStatic(String classPath, String methodName, Class[] classes, Object[] parameters) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        Method m = Class.forName(classPath).getMethod(methodName, classes);
         m.setAccessible(true);
         return m.invoke(null, parameters);
-    }
-
-    /**
-     * @param classPath the full path of the class
-     * @param fieldName the name of the variable
-     * @return the value of the variable
-     * @throws ClassNotFoundException the class path given is incorrect
-     * @throws NoSuchFieldException   the variable name is incorrect or the variable is private
-     * @throws IllegalAccessException
-     */
-
-    public static Object getStaticVar(String classPath, String fieldName) throws ClassNotFoundException, NoSuchFieldException, IllegalAccessException {
-        return Class.forName(classPath).getDeclaredField(fieldName).get(null);
     }
 
     /**
@@ -333,7 +196,7 @@ public class Reflektor {
      * @throws IllegalAccessException
      */
 
-    public static Object getPrivateStaticVar(String classPath, String fieldName) throws ClassNotFoundException, IllegalAccessException, NoSuchFieldException {
+    public static Object getStaticVar(String classPath, String fieldName) throws ClassNotFoundException, IllegalAccessException, NoSuchFieldException {
         Field f = Class.forName(classPath).getDeclaredField(fieldName);
         f.setAccessible(true);
         return f.get(null);
