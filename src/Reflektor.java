@@ -5,6 +5,10 @@ import java.util.HashMap;
 
 /**
  * Created by clvcooke on 10/27/2015.
+ *
+ * A Reflektor class will not act like a Proxy, when passed into a method its type will be Reflektor.
+ * However if you wish to pass in the reflected class as a parameter simply call #getTarget to get the underlying object
+ *
  */
 public class Reflektor {
 
@@ -25,7 +29,8 @@ public class Reflektor {
 
     /**
      * @param classPath  the full path of the target class
-     * @param parameters an array of the parameters (if using Reflektor objects call #getClient on them before adding them to the array)
+     * @param classes    the classes of the parameters
+     * @param parameters an array of the parameters (if using Reflektor objects call #getTarget on them before adding them to the array)
      * @throws ClassNotFoundException    the class name given does not resolve to an actual class
      * @throws NoSuchMethodException     there is no constructor with these parameters
      * @throws IllegalAccessException    the class/method can not be publicly accessed
@@ -33,7 +38,7 @@ public class Reflektor {
      * @throws InstantiationException    the constructor is not valid
      */
 
-    public Reflektor(String classPath,Class[] classes, Object[] parameters) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
+    public Reflektor(String classPath, Class[] classes, Object[] parameters) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
         targetClass = Class.forName(classPath);
         target = targetClass.getConstructor(classes).newInstance(parameters);
     }
@@ -57,6 +62,7 @@ public class Reflektor {
 
     /**
      * @param classPath  the full path of the target class
+     * @param classes    the classes of the parameters
      * @param methodName the method used instead of a normal constructor
      * @param parameters an array of the parameters (if using Reflektor objects call #getClient on them before adding them to the array)\
      * @throws ClassNotFoundException    the class name given does not resolve to an actual class
@@ -75,15 +81,14 @@ public class Reflektor {
 
     /**
      * In case you already have the object you want to use, but want to wrap it in reflektor
-     * @param object the object that you want to wrap in Reflektor
      *
+     * @param object the object that you want to wrap in Reflektor
      */
 
     public Reflektor(Object object) {
         targetClass = object.getClass();
         target = object;
     }
-
 
 
     /**
@@ -103,6 +108,7 @@ public class Reflektor {
 
     /**
      * @param methodName the method which you want to invoke
+     * @param classes    the classes of the parameters
      * @param parameters the parameters for the method
      * @return the return value of the method (ignore if void)
      * @throws NoSuchMethodException     the method name given was incorrect or the parameters were incorrect
@@ -173,6 +179,7 @@ public class Reflektor {
     /**
      * @param classPath  the full path of the class
      * @param methodName the name of the method
+     * @param classes    the classes of the parameters
      * @param parameters the parameters of the method
      * @return the return value of the method (ignore if void)
      * @throws ClassNotFoundException    the class path given is incorrect
