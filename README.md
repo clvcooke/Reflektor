@@ -46,10 +46,7 @@ Object builder = apiClientBuilder.getTarget();
 ###Importing
 
 There are two main ways to use Reflektor in your application.
- 1. Import the jar file (Coming soon)
- 2. Using Maven (Coming soon)
- 3. Using Gradle (Coming soon)
- 4. Copy the class into your package (there is only one class, no dependencies)
+ 1. Copy the class into your package (there is only one class, no dependencies)
  
 ###Usage 
 The java docs on each method should explain how to use each method/constructor fairly well
