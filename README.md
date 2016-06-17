@@ -49,7 +49,7 @@ Copy the class into your package (there is only one class, no dependencies)
 ###Usage 
 The java docs on each method should explain how to use each method/constructor fairly well
 
-
+##License
 
 Copyright (c) 2016 Colin Cooke
 
